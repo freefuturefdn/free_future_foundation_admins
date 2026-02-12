@@ -1,0 +1,237 @@
+This is the admin website for Free Future Foundation
+
+This website should be used by admin depending on there account type. 
+
+So we should have four account type "super_admin", "admin", "team_member" and "manager" 
+
+super_admin: 
+    - can create all accounts
+    - can delete all accounts
+    - can update all accounts 
+    - can change passwords for missing account passwords 
+    - can add/delete/update board members 
+    - can view donations 
+    - can create/delete/update events 
+    - can add images/videos to gallery 
+    - can create/update/delete news 
+    - can create/update/delete team members 
+    - can create/update/delete volunteers. 
+    - view partnership inquires
+    - upload/delete/update podcasts 
+    - view newsletter_subscribers and export the data as csv
+
+admin: 
+    - can crate team members and managers accounts 
+    - can update team members and managers accounts 
+    - can change passwords for missing account passwords for team members and managers 
+    - can view donations 
+    - can create/delete/update events 
+    - can add/delete/update images/videos to gallery 
+    - can create/update/delete news
+    - can create/update/delete team members 
+    - can create/update/delete volunteers. 
+    - view partnership inquires
+    - upload/delete/update podcasts 
+    - view newsletter_subscribers and export the data as csv
+
+
+team_member: 
+    - can view donations 
+    - can create/delete/update events 
+    - can add images/videos to gallery 
+    - can create/update/delete news
+    - can create/update/delete volunteers. 
+    - view partnership inquires
+    - upload/delete/update podcasts 
+
+manager: 
+    - can create/update events 
+    - can add/update images/videos to gallery 
+    - can create/update news
+    - can upload/update podcasts 
+
+Important notes:
+    - the volunteers are displayed in the main website based on the year, that's to say that every year has a seperate voluteers page. 
+
+This is the website colors, no darkmode: 
+    --background: #ffffff; /* White */
+    --foreground: #092d71; /* Primary dark blue */
+    --card: #f7f7f7; /* Light ash */
+    --card-foreground: #092d71; /* Primary dark blue */
+    --popover: #f2ece6; /* Light beige */
+    --popover-foreground: #092d71; /* Primary dark blue */
+    --primary: #092d71; /* Primary dark blue */
+    --primary-foreground: #ffffff; /* White */
+    --secondary: #eca105; /* Golden yellow */
+    --secondary-foreground: #ffffff; /* White */
+    --muted: #e8edf6; /* Light blue-gray */
+    --muted-foreground: #737373; /* Medium gray */
+    --accent: #eca105; /* Golden yellow */
+    --accent-foreground: #092d71; /* Primary dark blue */
+    --destructive: #092d71; /* Bright red */
+    --destructive-foreground: #ffffff; /* White */
+    --border: #e5e5e5; /* Light gray */
+    --input: #e5e5e5; /* Light gray */
+    --ring: #eca105; /* Golden yellow */
+    --radius: 0.5rem;
+
+The database schema is contained below: 
+
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.account-types (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_email character varying,
+  account_type text
+);
+CREATE TABLE public.articles (
+  id integer NOT NULL DEFAULT nextval('articles_id_seq'::regclass),
+  title character varying NOT NULL,
+  slug character varying NOT NULL UNIQUE,
+  author character varying NOT NULL,
+  published_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  first_image_url text NOT NULL,
+  second_image_url text NOT NULL,
+  first_content text NOT NULL,
+  second_content text NOT NULL,
+  summary text NOT NULL,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT articles_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.board_members (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  name character varying NOT NULL,
+  position character varying NOT NULL,
+  bio text NOT NULL,
+  image_url text,
+  social_links jsonb NOT NULL DEFAULT '{}'::jsonb,
+  order_position integer NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT board_members_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.donations (
+  id integer NOT NULL DEFAULT nextval('donations_id_seq'::regclass),
+  name character varying NOT NULL,
+  email character varying NOT NULL,
+  phone character varying,
+  message text,
+  payment_status character varying DEFAULT 'pending'::character varying,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT donations_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.events (
+  id bigint NOT NULL DEFAULT nextval('events_id_seq'::regclass),
+  title character varying NOT NULL,
+  description text NOT NULL,
+  location character varying NOT NULL,
+  start_date timestamp with time zone NOT NULL,
+  end_date timestamp with time zone NOT NULL,
+  image_url text,
+  registration_url text,
+  is_featured boolean DEFAULT false,
+  max_attendees integer,
+  current_attendees integer DEFAULT 0,
+  status character varying NOT NULL DEFAULT 'upcoming'::character varying CHECK (status::text = ANY (ARRAY['upcoming'::character varying, 'ongoing'::character varying, 'completed'::character varying, 'cancelled'::character varying]::text[])),
+  category character varying NOT NULL,
+  resources jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by uuid,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT events_pkey PRIMARY KEY (id),
+  CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
+);
+CREATE TABLE public.gallery (
+  id bigint NOT NULL DEFAULT nextval('gallery_id_seq'::regclass),
+  title character varying NOT NULL,
+  description text NOT NULL,
+  image_url text NOT NULL,
+  video_url text,
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['image'::character varying, 'video'::character varying]::text[])),
+  created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_by uuid,
+  status character varying NOT NULL DEFAULT 'published'::character varying CHECK (status::text = ANY (ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying]::text[])),
+  metadata jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT gallery_pkey PRIMARY KEY (id),
+  CONSTRAINT gallery_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id)
+);
+CREATE TABLE public.news (
+  id integer NOT NULL DEFAULT nextval('news_id_seq'::regclass),
+  title character varying NOT NULL,
+  slug character varying NOT NULL UNIQUE,
+  author character varying NOT NULL,
+  summary text NOT NULL,
+  content text NOT NULL,
+  image_url text NOT NULL,
+  published_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  category character varying NOT NULL,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT news_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.newsletter_subscribers (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  email character varying NOT NULL UNIQUE,
+  subscribed_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT newsletter_subscribers_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.partnership_inquiries (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  organization_name character varying NOT NULL,
+  contact_name character varying NOT NULL,
+  email character varying NOT NULL,
+  phone character varying NOT NULL,
+  organization_type character varying NOT NULL,
+  partnership_type character varying NOT NULL,
+  message text NOT NULL,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT partnership_inquiries_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.podcasts (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  title character varying NOT NULL,
+  description text NOT NULL,
+  episode_number integer NOT NULL,
+  category character varying NOT NULL,
+  image_url text,
+  audio_url text NOT NULL,
+  duration character varying NOT NULL,
+  host character varying NOT NULL,
+  guests ARRAY DEFAULT '{}'::text[],
+  published_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  featured boolean DEFAULT false,
+  listen_count integer DEFAULT 0,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT podcasts_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.team_members (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  name character varying NOT NULL,
+  position character varying NOT NULL,
+  bio text NOT NULL,
+  image_url text,
+  social_links jsonb NOT NULL DEFAULT '{}'::jsonb,
+  order_position integer NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at timestamp with time zone NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT team_members_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.volunteers (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  name character varying NOT NULL,
+  email character varying NOT NULL,
+  phone character varying NOT NULL,
+  location character varying NOT NULL,
+  interests ARRAY NOT NULL,
+  experience text NOT NULL,
+  availability character varying NOT NULL,
+  agree_to_terms boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT volunteers_pkey PRIMARY KEY (id)
+);
