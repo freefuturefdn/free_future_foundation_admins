@@ -81,7 +81,6 @@ export function Dashboard() {
       <header className="py-3 border-bottom bg-white">
         <div className="container d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-2 text-primary fw-bold">
-            <ShieldLock size={28} />
             <span>Free Future Foundation Admin</span>
           </div>
           <div className="d-flex align-items-center gap-3">

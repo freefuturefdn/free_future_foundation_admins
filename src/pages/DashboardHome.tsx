@@ -27,7 +27,6 @@ export function DashboardHome() {
   return (
     <div className="container-fluid p-4">
       <div className="d-flex align-items-center gap-2 mb-4">
-        <ShieldLock size={28} className="text-primary" />
         <h3 className="mb-0 text-primary">Welcome back</h3>
       </div>
 

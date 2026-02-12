@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { ShieldLock, EnvelopeFill, LockFill, BoxArrowInRight } from 'react-bootstrap-icons';
+import { ShieldLock, EnvelopeFill, LockFill, BoxArrowInRight, EyeFill, EyeSlashFill } from 'react-bootstrap-icons';
 import { useAuth } from '../context/AuthContext';
 
 const mission = `Our mission is to inspire and equip young Africans to become informed, courageous leaders who advance freedom, justice, and human dignity.
@@ -9,6 +9,7 @@ export function LoginPage() {
   const { login, error, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [info, setInfo] = useState('');
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -24,7 +25,7 @@ export function LoginPage() {
         <div className="container d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-2 text-primary fw-bold">
             <img src="/colored-logo.png" alt="Free Future Foundation" height={36} />
-            <span>Free Future Foundation Admin</span>
+            <span>Free Future Foundation</span>
           </div>
           <div className="text-muted small">Security-first access portal</div>
         </div>
@@ -36,13 +37,6 @@ export function LoginPage() {
             <div className="col-12 col-lg-5">
               <div className="card h-100 shadow-sm border-0">
                 <div className="card-body p-4">
-                  <div className="d-flex align-items-center gap-2 mb-3 text-primary">
-                    <ShieldLock size={24} />
-                    <h5 className="mb-0">Secure Sign In</h5>
-                  </div>
-                  <p className="text-muted small mb-4">
-                    Only authorized super_admins, admins, team members, and managers may sign in. Ensure you are on a trusted network.
-                  </p>
                   <form onSubmit={handleSubmit} className="d-grid gap-3">
                     <div>
                       <label htmlFor="email" className="form-label fw-semibold text-primary">Email address</label>
@@ -65,13 +59,22 @@ export function LoginPage() {
                         <span className="input-group-text bg-light border-end-0"><LockFill /></span>
                         <input
                           id="password"
-                          type="password"
-                          className="form-control border-start-0"
+                          type={showPassword ? 'text' : 'password'}
+                          className="form-control border-start-0 border-end-0"
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
                         />
+                        <button
+                          type="button"
+                          className="input-group-text bg-light border-start-0"
+                          onClick={() => setShowPassword((v) => !v)}
+                          tabIndex={-1}
+                          title={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeSlashFill /> : <EyeFill />}
+                        </button>
                       </div>
                     </div>
                     <button type="submit" className="btn btn-primary d-flex align-items-center justify-content-center gap-2" disabled={loading}>
@@ -80,7 +83,7 @@ export function LoginPage() {
                     </button>
                   </form>
                   <div className="alert alert-warning mt-3 mb-1 small" role="alert">
-                    Forgot password? For security, contact the CEO or an admin to reset your credentials.
+                    Forgot password? For security, contact an admin to reset your credentials.
                   </div>
                   {error && (
                     <div className="alert alert-danger mt-2 small" role="alert">
@@ -101,17 +104,9 @@ export function LoginPage() {
                 <div className="card-body p-4 d-flex flex-column justify-content-center">
                   <img src="/logo-white.png" alt="Free Future Foundation" height={60} className="mb-3 align-self-start" />
                   <p className="text-uppercase small fw-semibold letter-spacing-1 mb-2">Our mission</p>
-                  <h2 className="fw-bold mb-3">Inspiring courageous African leaders</h2>
                   <p className="lead" style={{ whiteSpace: 'pre-line' }}>
                     {mission}
                   </p>
-                  <div className="mt-4">
-                    <div className="d-flex align-items-center gap-2">
-                      <div className="security-dot" />
-                      <span className="fw-semibold">Security is our core commitment.</span>
-                    </div>
-                    <p className="mb-0 mt-2 opacity-75 small">Access is monitored and limited to authorized personnel. All actions are logged.</p>
-                  </div>
                 </div>
               </div>
             </div>

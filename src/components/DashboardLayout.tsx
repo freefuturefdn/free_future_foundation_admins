@@ -14,7 +14,8 @@ import {
   PersonBadgeFill,
   BoxArrowRight,
   Mailbox,
-  AwardFill
+  AwardFill,
+  CloudFill
 } from 'react-bootstrap-icons';
 
 export function DashboardLayout() {
@@ -40,8 +41,8 @@ export function DashboardLayout() {
       {/* Sidebar */}
       <div className="d-flex flex-column flex-shrink-0 p-3 bg-white text-dark shadow-sm sidebar-scroll" style={{ width: '260px' }}>
         <div className="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-          <img src="/colored-logo.png" alt="Free Future Foundation" height={36} className="me-2" />
-          <span className="fs-5 fw-bold text-primary">FreeFuture Admin</span>
+          <img src="/colored-logo.png" alt="Free Future Foundation" height={42} className="me-2" />
+          <span className=" text-primary">Free Future Foundation Admin Portal</span>
         </div>
         <hr />
         <Nav className="flex-column mb-auto gap-1">
@@ -57,6 +58,7 @@ export function DashboardLayout() {
           {canAccessModule(accountType, 'partnerships') && link('/dashboard/partnerships', 'Partnerships', <EnvelopePaperFill />)}
           {canAccessModule(accountType, 'team') && link('/dashboard/team', 'Team', <PersonBadgeFill />)}
           {canAccessModule(accountType, 'newsletter') && link('/dashboard/newsletter', 'Newsletter', <Mailbox />)}
+          {canAccessModule(accountType, 'media') && link('/dashboard/media', 'Media', <CloudFill />)}
         </Nav>
         <hr />
         <div className="d-grid">
