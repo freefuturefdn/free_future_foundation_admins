@@ -3,7 +3,6 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { canAccessModule } from '../lib/permissions';
 import { 
-  ShieldLock, 
   Speedometer2, 
   PeopleFill, 
   CalendarDateFill, 
@@ -41,7 +40,7 @@ export function DashboardLayout() {
       {/* Sidebar */}
       <div className="d-flex flex-column flex-shrink-0 p-3 bg-white text-dark shadow-sm sidebar-scroll" style={{ width: '260px' }}>
         <div className="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
-          <ShieldLock className="bi me-2 text-primary" size={32} />
+          <img src="/colored-logo.png" alt="Free Future Foundation" height={36} className="me-2" />
           <span className="fs-5 fw-bold text-primary">FreeFuture Admin</span>
         </div>
         <hr />

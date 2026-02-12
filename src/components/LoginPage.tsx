@@ -23,7 +23,7 @@ export function LoginPage() {
       <header className="py-3 border-bottom bg-white">
         <div className="container d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-2 text-primary fw-bold">
-            <ShieldLock size={28} />
+            <img src="/colored-logo.png" alt="Free Future Foundation" height={36} />
             <span>Free Future Foundation Admin</span>
           </div>
           <div className="text-muted small">Security-first access portal</div>
@@ -99,6 +99,7 @@ export function LoginPage() {
             <div className="col-12 col-lg-7">
               <div className="card h-100 border-0 bg-primary text-white shadow-sm">
                 <div className="card-body p-4 d-flex flex-column justify-content-center">
+                  <img src="/logo-white.png" alt="Free Future Foundation" height={60} className="mb-3 align-self-start" />
                   <p className="text-uppercase small fw-semibold letter-spacing-1 mb-2">Our mission</p>
                   <h2 className="fw-bold mb-3">Inspiring courageous African leaders</h2>
                   <p className="lead" style={{ whiteSpace: 'pre-line' }}>
