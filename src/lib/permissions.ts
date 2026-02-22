@@ -80,6 +80,12 @@ const permissions: Record<string, Record<AccountType, Action[]>> = {
     team_member: ['create', 'read', 'update', 'delete'],
     manager: ['create', 'read', 'update'],
   },
+  articles: {
+    super_admin: ['create', 'read', 'update', 'delete'],
+    admin: ['create', 'read', 'update', 'delete'],
+    team_member: ['create', 'read', 'update', 'delete'],
+    manager: ['create', 'read', 'update'],
+  },
 };
 
 export function can(role: AccountType | null, module: string, action: Action): boolean {

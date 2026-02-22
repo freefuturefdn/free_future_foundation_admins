@@ -2,7 +2,8 @@ import { useAuth } from '../context/AuthContext';
 import { canAccessModule } from '../lib/permissions';
 import {
   CalendarDateFill, Images, Newspaper, MicFill, HeartFill,
-  EnvelopePaperFill, PersonBadgeFill, PeopleFill, ShieldLock, Mailbox
+  EnvelopePaperFill, PersonBadgeFill, PeopleFill, ShieldLock, Mailbox,
+  JournalText
 } from 'react-bootstrap-icons';
 
 const modules = [
@@ -17,6 +18,7 @@ const modules = [
   { key: 'donations', label: 'Donations', icon: <HeartFill />, path: '/dashboard/donations' },
   { key: 'partnerships', label: 'Partnerships', icon: <EnvelopePaperFill />, path: '/dashboard/partnerships' },
   { key: 'newsletter', label: 'Newsletter', icon: <Mailbox />, path: '/dashboard/newsletter' },
+  { key: 'articles', label: 'Articles', icon: <JournalText />, path: '/dashboard/articles' },
 ];
 
 export function DashboardHome() {

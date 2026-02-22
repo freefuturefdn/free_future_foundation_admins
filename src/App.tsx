@@ -14,6 +14,7 @@ import { DonationsPage } from './pages/DonationsPage';
 import { PartnershipsPage } from './pages/PartnershipsPage';
 import { NewsletterPage } from './pages/NewsletterPage';
 import { MediaPage } from './pages/MediaPage';
+import { ArticlesPage } from './pages/ArticlesPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -44,6 +45,7 @@ function App() {
         <Route path="partnerships" element={<PartnershipsPage />} />
         <Route path="newsletter" element={<NewsletterPage />} />
         <Route path="media" element={<MediaPage />} />
+        <Route path="articles" element={<ArticlesPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

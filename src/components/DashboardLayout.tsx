@@ -15,7 +15,8 @@ import {
   BoxArrowRight,
   Mailbox,
   AwardFill,
-  CloudFill
+  CloudFill,
+  JournalText
 } from 'react-bootstrap-icons';
 
 export function DashboardLayout() {
@@ -59,6 +60,7 @@ export function DashboardLayout() {
           {canAccessModule(accountType, 'team') && link('/dashboard/team', 'Team', <PersonBadgeFill />)}
           {canAccessModule(accountType, 'newsletter') && link('/dashboard/newsletter', 'Newsletter', <Mailbox />)}
           {canAccessModule(accountType, 'media') && link('/dashboard/media', 'Media', <CloudFill />)}
+          {canAccessModule(accountType, 'articles') && link('/dashboard/articles', 'Articles', <JournalText />)}
         </Nav>
         <hr />
         <div className="d-grid">
