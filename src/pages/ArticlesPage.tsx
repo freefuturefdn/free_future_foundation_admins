@@ -1,10 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner, Alert, Badge, Tabs, Tab } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
-import DOMPurify from 'dompurify';
 import { supabase } from '../lib/supabaseClient';
 import { can } from '../lib/permissions';
 import { useAuth } from '../context/AuthContext';
@@ -28,7 +25,7 @@ interface Article {
   updated_at: string;
 }
 
-type ContentFormat = 'plain' | 'markdown' | 'html';
+type ContentFormat = 'plain' | 'markdown';
 type PublishMode = 'draft' | 'publish_now' | 'schedule';
 
 interface ArticleForm {
@@ -78,9 +75,6 @@ function toLocalDatetime(iso: string | null): string {
 
 function detectFormat(contentA: string, contentB: string): ContentFormat {
   const content = `${contentA}\n${contentB}`;
-  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(content);
-  if (hasHtml) return 'html';
-
   const hasMarkdown = /(^|\n)#{1,6}\s|\*\*[^*]+\*\*|\[[^\]]+\]\([^\)]+\)|(^|\n)-\s|(^|\n)\d+\.\s|```/m.test(content);
   if (hasMarkdown) return 'markdown';
 
@@ -91,14 +85,9 @@ function renderFormattedContent(content: string, format: ContentFormat) {
   if (format === 'markdown') {
     return (
       <div className="article-rendered-content">
-        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>{content}</ReactMarkdown>
+        <ReactMarkdown>{content}</ReactMarkdown>
       </div>
     );
-  }
-
-  if (format === 'html') {
-    const sanitizedHtml = DOMPurify.sanitize(content, { USE_PROFILES: { html: true } });
-    return <div className="article-rendered-content" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
   }
 
   return <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>;
@@ -106,7 +95,6 @@ function renderFormattedContent(content: string, format: ContentFormat) {
 
 function formatLabel(format: ContentFormat): string {
   if (format === 'markdown') return 'Markdown';
-  if (format === 'html') return 'HTML';
   return 'Plain Text';
 }
 
@@ -119,6 +107,34 @@ interface ContentEditorProps {
 
 function ContentEditor({ label, value, onChange, format }: ContentEditorProps) {
   const [tab, setTab] = useState<'write' | 'preview'>('write');
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const updateSelection = (formatter: (selected: string) => string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = value.slice(start, end);
+    const replaced = formatter(selected || 'text');
+    const nextValue = `${value.slice(0, start)}${replaced}${value.slice(end)}`;
+    onChange(nextValue);
+  };
+
+  const markdownButtons = [
+    { label: 'H1', action: () => updateSelection((s) => `# ${s}`) },
+    { label: 'H2', action: () => updateSelection((s) => `## ${s}`) },
+    { label: 'H3', action: () => updateSelection((s) => `### ${s}`) },
+    { label: 'Bold', action: () => updateSelection((s) => `**${s}**`) },
+    { label: 'Italic', action: () => updateSelection((s) => `*${s}*`) },
+    { label: 'Quote', action: () => updateSelection((s) => `> ${s}`) },
+    { label: 'List', action: () => updateSelection((s) => `- ${s}`) },
+    { label: '1.', action: () => updateSelection((s) => `1. ${s}`) },
+    { label: 'Link', action: () => updateSelection((s) => `[${s}](https://example.com)`) },
+    { label: 'Code', action: () => updateSelection((s) => `\`${s}\``) },
+    { label: 'Code Block', action: () => updateSelection((s) => `\n\`\`\`\n${s}\n\`\`\`\n`) },
+    { label: 'HR', action: () => updateSelection(() => `\n---\n`) },
+  ];
 
   return (
     <Form.Group>
@@ -130,9 +146,19 @@ function ContentEditor({ label, value, onChange, format }: ContentEditorProps) {
       </Form.Label>
       <Tabs activeKey={tab} onSelect={(k) => setTab((k as 'write' | 'preview') || 'write')} className="mb-2" mountOnEnter unmountOnExit>
         <Tab eventKey="write" title="Write">
+          {format === 'markdown' && (
+            <div className="d-flex flex-wrap gap-2 mb-2">
+              {markdownButtons.map((button) => (
+                <Button key={button.label} variant="outline-secondary" size="sm" onClick={button.action} type="button">
+                  {button.label}
+                </Button>
+              ))}
+            </div>
+          )}
           <Form.Control
             as="textarea"
             rows={7}
+            ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Write ${label.toLowerCase()}...`}
@@ -479,7 +505,6 @@ export function ArticlesPage() {
                 >
                   <option value="plain">Plain text</option>
                   <option value="markdown">Markdown</option>
-                  <option value="html">HTML</option>
                 </Form.Select>
                 <Form.Text className="text-muted">Choose one format for both content sections in this post.</Form.Text>
               </Form.Group>

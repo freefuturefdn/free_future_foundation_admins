@@ -12,7 +12,7 @@ export function ArticlesFormattingGuidePage() {
       </div>
 
       <Alert variant="info" className="shadow-sm border-0">
-        Use this guide when writing post content. Both content sections in a post should use the same format mode selected in the editor.
+        Use this guide when writing post content. Supported formats are Plain Text and Markdown.
       </Alert>
 
       <Row className="g-3">
@@ -36,20 +36,37 @@ Use blank lines to separate blocks.</pre>
             <Card.Body>
               <Card.Title className="text-primary">Markdown</Card.Title>
               <Card.Text className="text-muted mb-3">
-                Recommended for headings, lists, links, emphasis, and readable source formatting.
+                Recommended for headings, emphasis, lists, links, quotes, code, and structure.
               </Card.Text>
-              <pre className="guide-code-block"># Main Heading
-## Section Heading
+              <pre className="guide-code-block"># Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
 
-**Bold text** and *italic text*
+**Bold text**
+*Italic text*
+***Bold and italic***
 
-- Bullet one
-- Bullet two
+- Bullet item
+- Another bullet
 
-1. First item
-2. Second item
+1. Numbered item
+2. Numbered item
 
-[Visit Free Future Foundation](https://example.org)</pre>
+&gt; Blockquote text
+
+[Link label](https://example.org)
+![Image alt text](https://example.org/image.jpg)
+
+Inline `code`
+
+```
+Code block
+multiple lines
+```
+
+---
+(horizontal line)</pre>
             </Card.Body>
           </Card>
         </Col>
@@ -57,17 +74,20 @@ Use blank lines to separate blocks.</pre>
         <Col lg={12}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Body>
-              <Card.Title className="text-primary">HTML</Card.Title>
+              <Card.Title className="text-primary">Markdown Tips</Card.Title>
               <Card.Text className="text-muted mb-3">
-                Use when you need precise layout control. HTML is sanitized for safety, so scripts and unsafe tags are removed automatically.
+                Write in normal text first, then add markdown syntax where needed. Keep spacing simple: one blank line between sections is usually enough.
               </Card.Text>
-              <pre className="guide-code-block">&lt;h2&gt;Section Title&lt;/h2&gt;
-&lt;p&gt;This is a paragraph with &lt;strong&gt;bold&lt;/strong&gt; text.&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;List item one&lt;/li&gt;
-  &lt;li&gt;List item two&lt;/li&gt;
-&lt;/ul&gt;
-&lt;blockquote&gt;Highlight an important quote.&lt;/blockquote&gt;</pre>
+              <pre className="guide-code-block">Good practice:
+- Keep heading levels in order (# then ## then ###)
+- Use numbered lists for steps, bullets for collections
+- Use links instead of long raw URLs in the text
+- Keep code in backticks to improve readability
+
+Avoid:
+- Mixing many heading levels in a short section
+- Huge paragraphs without line breaks
+- Broken links without https://</pre>
             </Card.Body>
           </Card>
         </Col>
@@ -81,29 +101,44 @@ Use blank lines to separate blocks.</pre>
               <tr>
                 <th>Need</th>
                 <th>Markdown</th>
-                <th>HTML</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Heading</td>
+                <td>Heading 1</td>
                 <td># Title</td>
-                <td>&lt;h1&gt;Title&lt;/h1&gt;</td>
               </tr>
               <tr>
                 <td>Bold text</td>
                 <td>**Important**</td>
-                <td>&lt;strong&gt;Important&lt;/strong&gt;</td>
               </tr>
               <tr>
-                <td>Link</td>
-                <td>[Label](https://example.com)</td>
-                <td>&lt;a href="https://example.com"&gt;Label&lt;/a&gt;</td>
+                <td>Italic text</td>
+                <td>*Emphasis*</td>
               </tr>
               <tr>
                 <td>Bullet list</td>
                 <td>- One</td>
-                <td>&lt;ul&gt;&lt;li&gt;One&lt;/li&gt;&lt;/ul&gt;</td>
+              </tr>
+              <tr>
+                <td>Numbered list</td>
+                <td>1. First</td>
+              </tr>
+              <tr>
+                <td>Link</td>
+                <td>[Label](https://example.com)</td>
+              </tr>
+              <tr>
+                <td>Blockquote</td>
+                <td>{'>'} Quoted text</td>
+              </tr>
+              <tr>
+                <td>Inline code</td>
+                <td>`const x = 1`</td>
+              </tr>
+              <tr>
+                <td>Code block</td>
+                <td>``` code ```</td>
               </tr>
             </tbody>
           </Table>
