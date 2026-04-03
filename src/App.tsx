@@ -15,6 +15,7 @@ import { PartnershipsPage } from './pages/PartnershipsPage';
 import { NewsletterPage } from './pages/NewsletterPage';
 import { MediaPage } from './pages/MediaPage';
 import { ArticlesPage } from './pages/ArticlesPage';
+import { ArticlesFormattingGuidePage } from './pages/ArticlesFormattingGuidePage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -46,6 +47,7 @@ function App() {
         <Route path="newsletter" element={<NewsletterPage />} />
         <Route path="media" element={<MediaPage />} />
         <Route path="articles" element={<ArticlesPage />} />
+        <Route path="articles/formatting-guide" element={<ArticlesFormattingGuidePage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

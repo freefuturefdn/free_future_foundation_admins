@@ -16,7 +16,8 @@ import {
   Mailbox,
   AwardFill,
   CloudFill,
-  JournalText
+  JournalText,
+  QuestionCircleFill
 } from 'react-bootstrap-icons';
 
 export function DashboardLayout() {
@@ -61,6 +62,7 @@ export function DashboardLayout() {
           {canAccessModule(accountType, 'newsletter') && link('/dashboard/newsletter', 'Newsletter', <Mailbox />)}
           {canAccessModule(accountType, 'media') && link('/dashboard/media', 'Media', <CloudFill />)}
           {canAccessModule(accountType, 'articles') && link('/dashboard/articles', 'Articles', <JournalText />)}
+          {canAccessModule(accountType, 'articles') && link('/dashboard/articles/formatting-guide', 'Articles Guide', <QuestionCircleFill />)}
         </Nav>
         <hr />
         <div className="d-grid">

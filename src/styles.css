@@ -105,3 +105,46 @@ body {
   border-radius: var(--radius);
   border: none;
 }
+
+.article-editor-preview {
+  min-height: 180px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.article-rendered-content h1,
+.article-rendered-content h2,
+.article-rendered-content h3,
+.article-rendered-content h4,
+.article-rendered-content h5,
+.article-rendered-content h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.65rem;
+  color: var(--primary);
+}
+
+.article-rendered-content p {
+  margin-bottom: 0.8rem;
+}
+
+.article-rendered-content ul,
+.article-rendered-content ol {
+  padding-left: 1.25rem;
+}
+
+.article-rendered-content blockquote {
+  border-left: 4px solid var(--secondary);
+  background: rgba(236, 161, 5, 0.08);
+  padding: 0.5rem 0.8rem;
+  margin: 0.75rem 0;
+}
+
+.guide-code-block {
+  margin: 0;
+  white-space: pre-wrap;
+  background: #f8f9fa;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  font-size: 0.9rem;
+}

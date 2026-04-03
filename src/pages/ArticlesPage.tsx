@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Spinner, Alert, Badge } from 'react-bootstrap';
+import { Table, Button, Modal, Form, Spinner, Alert, Badge, Tabs, Tab } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import DOMPurify from 'dompurify';
 import { supabase } from '../lib/supabaseClient';
 import { can } from '../lib/permissions';
 import { useAuth } from '../context/AuthContext';
-import { PlusCircle, PencilSquare, Trash, Eye } from 'react-bootstrap-icons';
+import { PlusCircle, PencilSquare, Trash, Eye, QuestionCircle } from 'react-bootstrap-icons';
 
 /* ── Types ────────────────────────────────────────────────── */
 
@@ -17,10 +22,14 @@ interface Article {
   second_image_url: string;
   first_content: string;
   second_content: string;
+  content_format?: ContentFormat | null;
   summary: string;
   created_at: string;
   updated_at: string;
 }
+
+type ContentFormat = 'plain' | 'markdown' | 'html';
+type PublishMode = 'draft' | 'publish_now' | 'schedule';
 
 interface ArticleForm {
   title: string;
@@ -32,6 +41,8 @@ interface ArticleForm {
   first_image_url: string;
   second_image_url: string;
   published_at: string;
+  content_format: ContentFormat;
+  publish_mode: PublishMode;
 }
 
 const emptyForm: ArticleForm = {
@@ -44,6 +55,8 @@ const emptyForm: ArticleForm = {
   first_image_url: '',
   second_image_url: '',
   published_at: '',
+  content_format: 'plain',
+  publish_mode: 'publish_now',
 };
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -61,6 +74,77 @@ function toLocalDatetime(iso: string | null): string {
   // Format as YYYY-MM-DDTHH:MM for datetime-local input
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function detectFormat(contentA: string, contentB: string): ContentFormat {
+  const content = `${contentA}\n${contentB}`;
+  const hasHtml = /<\/?[a-z][\s\S]*>/i.test(content);
+  if (hasHtml) return 'html';
+
+  const hasMarkdown = /(^|\n)#{1,6}\s|\*\*[^*]+\*\*|\[[^\]]+\]\([^\)]+\)|(^|\n)-\s|(^|\n)\d+\.\s|```/m.test(content);
+  if (hasMarkdown) return 'markdown';
+
+  return 'plain';
+}
+
+function renderFormattedContent(content: string, format: ContentFormat) {
+  if (format === 'markdown') {
+    return (
+      <div className="article-rendered-content">
+        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>{content}</ReactMarkdown>
+      </div>
+    );
+  }
+
+  if (format === 'html') {
+    const sanitizedHtml = DOMPurify.sanitize(content, { USE_PROFILES: { html: true } });
+    return <div className="article-rendered-content" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
+  }
+
+  return <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>;
+}
+
+function formatLabel(format: ContentFormat): string {
+  if (format === 'markdown') return 'Markdown';
+  if (format === 'html') return 'HTML';
+  return 'Plain Text';
+}
+
+interface ContentEditorProps {
+  label: string;
+  value: string;
+  onChange: (nextValue: string) => void;
+  format: ContentFormat;
+}
+
+function ContentEditor({ label, value, onChange, format }: ContentEditorProps) {
+  const [tab, setTab] = useState<'write' | 'preview'>('write');
+
+  return (
+    <Form.Group>
+      <Form.Label className="fw-semibold d-flex justify-content-between align-items-center">
+        <span>{label}</span>
+        <Badge bg="light" text="dark" className="border">
+          {formatLabel(format)}
+        </Badge>
+      </Form.Label>
+      <Tabs activeKey={tab} onSelect={(k) => setTab((k as 'write' | 'preview') || 'write')} className="mb-2" mountOnEnter unmountOnExit>
+        <Tab eventKey="write" title="Write">
+          <Form.Control
+            as="textarea"
+            rows={7}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={`Write ${label.toLowerCase()}...`}
+            required
+          />
+        </Tab>
+        <Tab eventKey="preview" title="Preview">
+          <div className="border rounded p-3 bg-light article-editor-preview">{renderFormattedContent(value || 'Nothing to preview yet.', format)}</div>
+        </Tab>
+      </Tabs>
+    </Form.Group>
+  );
 }
 
 /* ── Component ────────────────────────────────────────────── */
@@ -118,8 +202,33 @@ export function ArticlesPage() {
       first_image_url: article.first_image_url,
       second_image_url: article.second_image_url,
       published_at: toLocalDatetime(article.published_at),
+      content_format: article.content_format ?? detectFormat(article.first_content, article.second_content),
+      publish_mode: article.published_at ? 'schedule' : 'draft',
     });
     setShowModal(true);
+  };
+
+  const saveArticle = async (
+    data: Record<string, unknown>,
+    format: ContentFormat,
+    isEditing: boolean,
+    articleId?: number,
+  ) => {
+    const dataWithFormat = { ...data, content_format: format };
+
+    if (isEditing && articleId) {
+      let result = await supabase.from('articles').update(dataWithFormat).eq('id', articleId);
+      if (result.error && /content_format/i.test(result.error.message)) {
+        result = await supabase.from('articles').update(data).eq('id', articleId);
+      }
+      return result.error;
+    }
+
+    let result = await supabase.from('articles').insert(dataWithFormat);
+    if (result.error && /content_format/i.test(result.error.message)) {
+      result = await supabase.from('articles').insert(data);
+    }
+    return result.error;
   };
 
   const handleSave = async () => {
@@ -139,17 +248,24 @@ export function ArticlesPage() {
       second_image_url: form.second_image_url,
     };
 
-    // Only include published_at when the user filled it in
-    if (form.published_at) {
+    if (form.publish_mode === 'draft') {
+      payload.published_at = null;
+    } else if (form.publish_mode === 'publish_now') {
+      payload.published_at = new Date().toISOString();
+    } else if (form.published_at) {
       payload.published_at = new Date(form.published_at).toISOString();
+    } else {
+      setError('Please choose a publish date and time for scheduled posting.');
+      setSaving(false);
+      return;
     }
 
-    if (editing) {
-      const { error } = await supabase.from('articles').update(payload).eq('id', editing.id);
-      if (error) setError(error.message);
-    } else {
-      const { error } = await supabase.from('articles').insert(payload);
-      if (error) setError(error.message);
+    const saveError = await saveArticle(payload, form.content_format, !!editing, editing?.id);
+
+    if (saveError) {
+      setError(saveError.message);
+      setSaving(false);
+      return;
     }
 
     setSaving(false);
@@ -178,18 +294,31 @@ export function ArticlesPage() {
 
   /* ── Render ───────────────────────────────────────────── */
 
-  const isFormValid = form.title && form.author && form.summary && form.first_content && form.second_content && form.first_image_url && form.second_image_url;
+  const isFormValid =
+    form.title &&
+    form.author &&
+    form.summary &&
+    form.first_content &&
+    form.second_content &&
+    form.first_image_url &&
+    form.second_image_url &&
+    (form.publish_mode !== 'schedule' || !!form.published_at);
 
   return (
     <div className="container-fluid p-4">
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h4 className="text-primary mb-0">Articles</h4>
-        {can(accountType, 'articles', 'create') && (
-          <Button variant="primary" size="sm" onClick={openCreate} className="d-flex align-items-center gap-2">
-            <PlusCircle /> New Article
+        <div className="d-flex align-items-center gap-2">
+          <Button as={Link} to="/dashboard/articles/formatting-guide" variant="outline-secondary" size="sm" className="d-flex align-items-center gap-2">
+            <QuestionCircle /> Formatting Guide
           </Button>
-        )}
+          {can(accountType, 'articles', 'create') && (
+            <Button variant="primary" size="sm" onClick={openCreate} className="d-flex align-items-center gap-2">
+              <PlusCircle /> New Post
+            </Button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -208,6 +337,7 @@ export function ArticlesPage() {
               <tr>
                 <th>Title</th>
                 <th>Author</th>
+                <th>Format</th>
                 <th>Published</th>
                 <th>Updated</th>
                 <th style={{ width: '140px' }}>Actions</th>
@@ -223,6 +353,11 @@ export function ArticlesPage() {
                     </div>
                   </td>
                   <td>{a.author}</td>
+                  <td>
+                    <Badge bg="light" text="dark" className="border">
+                      {formatLabel(a.content_format ?? detectFormat(a.first_content, a.second_content))}
+                    </Badge>
+                  </td>
                   <td className="small">
                     {a.published_at ? (
                       new Date(a.published_at).toLocaleDateString()
@@ -257,8 +392,8 @@ export function ArticlesPage() {
               ))}
               {articles.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center text-muted py-4">
-                    No articles found. Click "New Article" to create one.
+                  <td colSpan={6} className="text-center text-muted py-4">
+                    No articles found. Click "New Post" to create one.
                   </td>
                 </tr>
               )}
@@ -322,15 +457,48 @@ export function ArticlesPage() {
             {/* Publish Date */}
             <div className="col-md-6">
               <Form.Group>
-                <Form.Label className="fw-semibold">Publish Date</Form.Label>
-                <Form.Control
-                  type="datetime-local"
-                  value={form.published_at}
-                  onChange={(e) => setForm({ ...form, published_at: e.target.value })}
-                />
-                <Form.Text className="text-muted">Leave blank to default to now.</Form.Text>
+                <Form.Label className="fw-semibold">Posting</Form.Label>
+                <Form.Select
+                  value={form.publish_mode}
+                  onChange={(e) => setForm({ ...form, publish_mode: e.target.value as PublishMode })}
+                >
+                  <option value="publish_now">Publish now</option>
+                  <option value="schedule">Schedule publish date</option>
+                  <option value="draft">Save as draft</option>
+                </Form.Select>
               </Form.Group>
             </div>
+
+            {/* Content Format */}
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label className="fw-semibold">Content Format</Form.Label>
+                <Form.Select
+                  value={form.content_format}
+                  onChange={(e) => setForm({ ...form, content_format: e.target.value as ContentFormat })}
+                >
+                  <option value="plain">Plain text</option>
+                  <option value="markdown">Markdown</option>
+                  <option value="html">HTML</option>
+                </Form.Select>
+                <Form.Text className="text-muted">Choose one format for both content sections in this post.</Form.Text>
+              </Form.Group>
+            </div>
+
+            {/* Scheduled Publish Date */}
+            {form.publish_mode === 'schedule' && (
+              <div className="col-12">
+                <Form.Group>
+                  <Form.Label className="fw-semibold">Publish Date and Time</Form.Label>
+                  <Form.Control
+                    type="datetime-local"
+                    value={form.published_at}
+                    onChange={(e) => setForm({ ...form, published_at: e.target.value })}
+                    required
+                  />
+                </Form.Group>
+              </div>
+            )}
 
             {/* Summary */}
             <div className="col-12">
@@ -393,32 +561,22 @@ export function ArticlesPage() {
 
             {/* First Content */}
             <div className="col-12">
-              <Form.Group>
-                <Form.Label className="fw-semibold">First Content</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={6}
-                  value={form.first_content}
-                  onChange={(e) => setForm({ ...form, first_content: e.target.value })}
-                  placeholder="Write the first section of the article..."
-                  required
-                />
-              </Form.Group>
+              <ContentEditor
+                label="First Content"
+                value={form.first_content}
+                onChange={(nextValue) => setForm({ ...form, first_content: nextValue })}
+                format={form.content_format}
+              />
             </div>
 
             {/* Second Content */}
             <div className="col-12">
-              <Form.Group>
-                <Form.Label className="fw-semibold">Second Content</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={6}
-                  value={form.second_content}
-                  onChange={(e) => setForm({ ...form, second_content: e.target.value })}
-                  placeholder="Write the second section of the article..."
-                  required
-                />
-              </Form.Group>
+              <ContentEditor
+                label="Second Content"
+                value={form.second_content}
+                onChange={(nextValue) => setForm({ ...form, second_content: nextValue })}
+                format={form.content_format}
+              />
             </div>
           </div>
         </Modal.Body>
@@ -440,6 +598,16 @@ export function ArticlesPage() {
               <Modal.Title className="text-primary">{previewArticle.title}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
+              {(() => {
+                const previewFormat = previewArticle.content_format ?? detectFormat(previewArticle.first_content, previewArticle.second_content);
+                return (
+                  <div className="mb-2">
+                    <Badge bg="light" text="dark" className="border">
+                      {formatLabel(previewFormat)}
+                    </Badge>
+                  </div>
+                );
+              })()}
               <div className="mb-2 text-muted small">
                 By <strong>{previewArticle.author}</strong>
                 {previewArticle.published_at && <> &middot; {new Date(previewArticle.published_at).toLocaleDateString()}</>}
@@ -454,7 +622,10 @@ export function ArticlesPage() {
                   style={{ maxHeight: 360, objectFit: 'cover' }}
                 />
               )}
-              <div style={{ whiteSpace: 'pre-wrap' }}>{previewArticle.first_content}</div>
+              {renderFormattedContent(
+                previewArticle.first_content,
+                previewArticle.content_format ?? detectFormat(previewArticle.first_content, previewArticle.second_content),
+              )}
               <hr />
               {previewArticle.second_image_url && (
                 <img
@@ -464,7 +635,10 @@ export function ArticlesPage() {
                   style={{ maxHeight: 360, objectFit: 'cover' }}
                 />
               )}
-              <div style={{ whiteSpace: 'pre-wrap' }}>{previewArticle.second_content}</div>
+              {renderFormattedContent(
+                previewArticle.second_content,
+                previewArticle.content_format ?? detectFormat(previewArticle.first_content, previewArticle.second_content),
+              )}
             </Modal.Body>
             <Modal.Footer className="border-0">
               <Button variant="secondary" onClick={() => setPreviewArticle(null)}>
